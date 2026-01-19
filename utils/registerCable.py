@@ -10,8 +10,8 @@ def register_cable():
     )
 
     register_coco_instances(
-        "cable_val",
+        "cable_test",
         {},
-        "dataset/validation/val.json",
-        "dataset/validation"
+        "dataset/test/test.json",
+        "dataset/test"
     )
