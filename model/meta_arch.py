@@ -9,7 +9,9 @@ class CableRCNN(GeneralizedRCNN):
     def __init__(self, cfg):
         super().__init__(cfg)
 
-        out_channels = self.backbone.output_shape()["res5"].channels
+        self.feature_name = list(self.backbone.output_shape().keys())[-1]
+        out_channels = self.backbone.output_shape()[self.feature_name].channels
+
         self.line_head = LineRegressionHead(out_channels)
         self.line_loss_weight = cfg.MODEL.LINE_LOSS_WEIGHT
 
@@ -19,15 +21,15 @@ class CableRCNN(GeneralizedRCNN):
 
         results = super().forward(batched_inputs)
 
-        line_pred = self.line_head(features["res5"])
+        line_pred = self.line_head(features[self.feature_name])
 
         if self.training:
             gt = torch.stack([x["line_params"] for x in batched_inputs]).to(
                 line_pred.device
             )
-
-            loss_line = F.smooth_l1_loss(line_pred, gt)
-            results["loss_line"] = loss_line * self.line_loss_weight
+            results["loss_line"] = (
+                F.smooth_l1_loss(line_pred, gt) * self.line_loss_weight
+            )
         else:
             results["line_params"] = line_pred
 
